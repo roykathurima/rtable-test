@@ -84,11 +84,6 @@ function App() {
     setAggregation((old) => {
       const newVal = allAgg[avgIdx % 4];
 
-      console.log("old state: ");
-      console.log(old);
-
-      console.log("new value: ", newVal);
-
       if (newVal === "nada") return {};
 
       return {
@@ -143,35 +138,5 @@ function App() {
     </main>
   );
 }
-
-// import { useEffect, useState } from "react";
-
-// const allAgg = ["sum", "mean", "max", "count", "nada"];
-// let avgIdx = -1;
-
-// function App() {
-//   const [aggregation, setAggregation] = useState({});
-
-//   const updateAggregation = () => {
-//     setAggregation((old) => {
-//       avgIdx += 1;
-//       const newVal = allAgg[avgIdx % 4];
-
-//       console.log("idx state in handler:", avgIdx);
-
-//       if (newVal === "nada") return {};
-
-//       return {
-//         age: newVal,
-//       };
-//     });
-//   };
-
-//   useEffect(() => {
-//     console.log("idx state in effect: ", avgIdx);
-//   }, [aggregation]);
-
-//   return <button onClick={updateAggregation}>Aggregate</button>;
-// }
 
 export default App;
