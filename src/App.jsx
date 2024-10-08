@@ -1,85 +1,73 @@
-import { useState } from 'react'
-import { useReactTable, getGroupedRowModel, getCoreRowModel, getExpandedRowModel, createColumnHelper, flexRender } from '@tanstack/react-table';
-import { makeData } from './make-data';
-
+import { useState } from "react";
+import {
+  useReactTable,
+  getGroupedRowModel,
+  getCoreRowModel,
+  getExpandedRowModel,
+  createColumnHelper,
+  flexRender,
+} from "@tanstack/react-table";
+import { makeData } from "./make-data";
 
 const columnHelper = createColumnHelper();
 
-const allSet = ['title', 'firstName', 'lastName', 'age'];
+const allSet = ["title", "firstName", "lastName", "age"];
+const allAgg = ["sum", "mean", "max", "count", "nada"];
 const data = makeData(10);
+let avgIdx = -1;
 
 function App() {
   const [grouping, setGrouping] = useState([]);
+  const [aggregation, setAggregation] = useState({});
+
   const columns = [
     columnHelper.display({
-      id: 'expander',
+      id: "expander",
       minSize: 4,
       cell: ({ row }) => {
         if (!row.getCanExpand()) return null;
-        const text = row.getIsExpanded() ? "-" : ">"
+        const text = row.getIsExpanded() ? "-" : ">";
         return (
-          <button onClick={(e) => {
-            e.stopPropagation();
-            row.toggleExpanded();
-          }}>{text}</button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              row.toggleExpanded();
+            }}
+          >
+            {text}
+          </button>
         );
-      }
+      },
     }),
-    columnHelper.accessor('title', {
-      header: 'Title',
+    columnHelper.accessor("title", {
+      header: "Title",
       cell: ({ getValue }) => <p>{getValue()}</p>,
       // getGroupingValue: row => row.title,
       aggregationFn: () => null,
     }),
-    columnHelper.accessor('firstName', {
-      header: 'First Name',
+    columnHelper.accessor("firstName", {
+      header: "First Name",
       cell: ({ getValue }) => <p>{getValue()}</p>,
     }),
-    columnHelper.accessor('lastName', {
-      header: 'Last Name',
+    columnHelper.accessor("lastName", {
+      header: "Last Name",
       cell: ({ getValue }) => <p>{getValue()}</p>,
       aggregationFn: () => null,
     }),
-    columnHelper.accessor('age', {
-      header: 'Age',
+    columnHelper.accessor("age", {
+      header: "Age",
       cell: ({ getValue }) => <p>{getValue()}</p>,
-      aggregationFn: (_, leafRows, childRows) => {
-        // console.log(leafRows);
-        // console.log(childRows);
-        const leafRowDepths = new Set();
-        const childRowDepths = new Set();
-        leafRows.forEach(rw => {
-          leafRowDepths.add(rw.depth);
-        });
-        childRows.forEach(rw => {
-          childRowDepths.add(rw.depth);
-        });
-    
-        console.log('leaf row depth: ');
-        console.log(leafRowDepths);
-        console.log('child row depths: ');
-        console.log(childRowDepths);
-        let groupingValue;
-        const tableInstance = leafRows[0].getAllCells()[0].getContext().table;
-    
-        const gRows = tableInstance.getGroupedRowModel().flatRows;
-    
-        for (let gRow of gRows) {
-          const child = gRow.subRows.find(item => item.id === childRows[0].id);
-          if (child) {
-            groupingValue = gRow.groupingValue;
-          }
-        }
-        return groupingValue;
-      }
+      aggregationFn: aggregation["age"],
     }),
   ];
 
   const addGrouping = () => {
-    const diff = allSet.filter(item => !grouping.find(pItem => pItem === item));
+    const diff = allSet.filter(
+      (item) => !grouping.find((pItem) => pItem === item)
+    );
     if (diff.length > 0) {
       const newState = [...grouping, diff[0]];
-      setGrouping(newState)
+      setGrouping(newState);
     }
   };
 
@@ -89,6 +77,24 @@ function App() {
       newState.pop();
       setGrouping(newState);
     }
+  };
+
+  const updateAggregation = () => {
+    avgIdx += 1;
+    setAggregation((old) => {
+      const newVal = allAgg[avgIdx % 4];
+
+      console.log("old state: ");
+      console.log(old);
+
+      console.log("new value: ", newVal);
+
+      if (newVal === "nada") return {};
+
+      return {
+        age: newVal,
+      };
+    });
   };
 
   const table = useReactTable({
@@ -104,34 +110,68 @@ function App() {
 
   return (
     <main>
-    <button onClick={addGrouping}>Add Grouping</button>
-    <button onClick={removeGrouping}>Remove Grouping</button>
-    <table>
-      <thead>
-      {table.getHeaderGroups().map(hg => (
-        <tr key={hg.id}>
-          {hg.headers.map(header => (
-            <th key={header.id}>
-              {flexRender(header.column.columnDef.header, header.getContext())}
-            </th>
+      <button onClick={addGrouping}>Add Grouping</button>
+      <button onClick={removeGrouping}>Remove Grouping</button>
+      <button onClick={updateAggregation}>Aggregate</button>
+      <table>
+        <thead>
+          {table.getHeaderGroups().map((hg) => (
+            <tr key={hg.id}>
+              {hg.headers.map((header) => (
+                <th key={header.id}>
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                  )}
+                </th>
+              ))}
+            </tr>
           ))}
-        </tr>
-      ))}
-      </thead>
-      <tbody>
-        {table.getRowModel().rows.map(row => (
-          <tr key={row.id}>
-            {row.getVisibleCells().map(cell => (
-              <td key={cell.id}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row) => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map((cell) => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </main>
-  )
+  );
 }
 
-export default App
+// import { useEffect, useState } from "react";
+
+// const allAgg = ["sum", "mean", "max", "count", "nada"];
+// let avgIdx = -1;
+
+// function App() {
+//   const [aggregation, setAggregation] = useState({});
+
+//   const updateAggregation = () => {
+//     setAggregation((old) => {
+//       avgIdx += 1;
+//       const newVal = allAgg[avgIdx % 4];
+
+//       console.log("idx state in handler:", avgIdx);
+
+//       if (newVal === "nada") return {};
+
+//       return {
+//         age: newVal,
+//       };
+//     });
+//   };
+
+//   useEffect(() => {
+//     console.log("idx state in effect: ", avgIdx);
+//   }, [aggregation]);
+
+//   return <button onClick={updateAggregation}>Aggregate</button>;
+// }
+
+export default App;
